@@ -1,20 +1,20 @@
-const punycode = require('punycode')
-const path = require('path')
+const punycode = require('punycode');
+const path = require('path');
 
-const searchEngine = require('util/searchEngine.js')
-const hosts = require('./hosts.js')
-const httpsTopSites = require('../../ext/httpsUpgrade/httpsTopSites.json')
-const publicSuffixes = require('../../ext/publicSuffixes/public_suffix_list.json')
+const searchEngine = require('util/searchEngine.js');
+const hosts = require('./hosts.js');
+const httpsTopSites = require('../../ext/httpsUpgrade/httpsTopSites.json');
+const publicSuffixes = require('../../ext/publicSuffixes/public_suffix_list.json');
 
 function removeWWW(domain) {
-    return (domain.startsWith('www.') ? domain.slice(4) : domain)
+    return (domain.startsWith('www.') ? domain.slice(4) : domain);
 }
 
 function removeTrailingSlash(url) {
-    return (url.endsWith('/') ? url.slice(0, -1) : url)
+    return (url.endsWith('/') ? url.slice(0, -1) : url);
 }
 
-function isEthereumAddress(url) {
+function isPolygonAddress(url) {
     return url.startsWith('0x') && url.length === 42;
 }
 
@@ -30,7 +30,7 @@ var urlParser = {
     isPossibleURL: function (url) {
         if (urlParser.isURL(url)) {
             return true;
-        } else if (isEthereumAddress(url)) {
+        } else if (isPolygonAddress(url)) {
             return true;
         } else {
             if (url.indexOf(' ') >= 0) {
@@ -63,9 +63,9 @@ var urlParser = {
             return 'view-source:' + urlParser.parse(realURL);
         }
 
-        if (isEthereumAddress(url)) {
-            // Handle Ethereum wallet addresses, you can customize this part based on your requirement
-            return 'ethereum://' + url; // Example
+        if (isPolygonAddress(url)) {
+            // Handle Polygon wallet addresses
+            return 'polygon://' + url;
         }
 
         if (url.startsWith('min:') && !url.startsWith('min://app/')) {
@@ -77,7 +77,7 @@ var urlParser = {
         if (urlParser.isURL(url)) {
             if (!urlParser.isInternalURL(url) && url.startsWith('http://')) {
                 const noProtoURL = urlParser.removeProtocol(url);
-                if (urlParser.isHTTPSUpgreadable(noProtoURL)) {
+                if (urlParser.isHTTPSUpgradable(noProtoURL)) {
                     return 'https://' + noProtoURL;
                 }
             }
@@ -85,7 +85,7 @@ var urlParser = {
         }
 
         if (urlParser.isURLMissingProtocol(url) && urlParser.validateDomain(urlParser.getDomain(url))) {
-            if (urlParser.isHTTPSUpgreadable(url)) {
+            if (urlParser.isHTTPSUpgradable(url)) {
                 return 'https://' + url;
             }
             return 'http://' + url;
@@ -162,9 +162,17 @@ var urlParser = {
         }
         return publicSuffixes.find(s => cleanDomain.endsWith(s)) !== undefined;
     },
-    isHTTPSUpgreadable: function (url) {
+    isHTTPSUpgradable: function (url) {
         const domain = removeWWW(urlParser.getDomain(url));
         return httpsTopSites.includes(domain);
+    },
+    getExplorerURL: function (address) {
+        // Replace this with your Polygon explorer URL
+        return `https://polygonscan.com/address/${address}`;
+    },
+    getRPCNode: function () {
+        // Replace this with your Polygon RPC node URL
+        return 'https://polygon-rpc.com';
     }
 };
 
