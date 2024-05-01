@@ -207,7 +207,6 @@ function initialize () {
         tabEditor.show(tabs.getSelected(), url + ' ')
         return true
       } else if (bang) {
-        tabEditor.hide()
         bang.fn(url.replace(bang.phrase, '').trimLeft())
         return true
       }
