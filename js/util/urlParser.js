@@ -15,7 +15,8 @@ function removeTrailingSlash(url) {
 }
 
 function isPolygonAddress(url) {
-    return url.startsWith('0x') && url.length === 42;
+    // Polygon address regex
+    return /^0x[a-fA-F0-9]{40}$/i.test(url);
 }
 
 var urlParser = {
@@ -165,14 +166,6 @@ var urlParser = {
     isHTTPSUpgradable: function (url) {
         const domain = removeWWW(urlParser.getDomain(url));
         return httpsTopSites.includes(domain);
-    },
-    getExplorerURL: function (address) {
-        // Replace this with your Polygon explorer URL
-        return `https://polygonscan.com/address/${address}`;
-    },
-    getRPCNode: function () {
-        // Replace this with your Polygon RPC node URL
-        return 'https://polygon-rpc.com';
     }
 };
 
