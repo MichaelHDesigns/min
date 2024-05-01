@@ -183,6 +183,26 @@ async function displayUserInfo(address) {
 }
 
 async function initialize() {
+    // Creating the URL input element
+    var urlInput = document.createElement('input');
+    urlInput.id = 'url-bar';
+    urlInput.type = 'text';
+    urlInput.placeholder = 'Enter Polygon address';
+    urlInput.style.width = '100%';
+    urlInput.style.height = '30px';
+    urlInput.style.padding = '5px';
+    urlInput.style.border = '1px solid #ccc';
+    urlInput.style.borderRadius = '5px';
+
+    // Append URL input element to the body
+    document.body.appendChild(urlInput);
+
+    // Event listener for URL input
+    urlInput.addEventListener('change', function (event) {
+        var address = event.target.value;
+        displayAddressInfo(address);
+    });
+
     searchbarPlugins.register('bangs', {
         index: 1,
         trigger: function (text) {
