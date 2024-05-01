@@ -195,6 +195,12 @@ function initialize () {
   })
 
   searchbarPlugins.registerURLHandler(function (url) {
+    if (url.startsWith('polygon://')) {
+      var address = url.substring(11); // Remove "polygon://" prefix
+      // Handle opening Polygon addresses here
+      console.log("Opening Polygon address:", address);
+      return true;
+    }
     if (url.indexOf('!') === 0) {
       incrementBangCount(url.split(' ')[0])
 
@@ -208,9 +214,10 @@ function initialize () {
         // there is a custom bang that is an action or has search text, so it can be run
         tabEditor.hide()
         bang.fn(url.replace(bang.phrase, '').trimLeft())
-        return true // override the default action
+        return true; // override the default action
       }
     }
+    return false;
   })
 
   const savedBangs = settings.get('customBangs')
