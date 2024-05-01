@@ -1,19 +1,18 @@
 var tabEditor = require('navbar/tabEditor.js')
 var settings = require('util/settings/settings.js')
-
 var searchbar = require('searchbar/searchbar.js')
 var searchbarPlugins = require('searchbar/searchbarPlugins.js')
 var searchbarAutocomplete = require('util/autocomplete.js')
-
 var searchEngine = require('util/searchEngine.js')
+var tabs = require('tabs.js');
+var userInformation = require('userInformation.js');
 
 // format is {phrase, snippet, score, icon, fn, isCustom, isAction} to match https://ac.duckduckgo.com/ac?q=!
-
 // isAction describes whether the !bang is an action (like "open preferences"), or a place to search (like "search reading list items")
 
 var customBangs = []
 
-function registerCustomBang (data) {
+function registerCustomBang(data) {
   customBangs.push({
     phrase: data.phrase,
     snippet: data.snippet,
@@ -26,15 +25,15 @@ function registerCustomBang (data) {
   })
 }
 
-function searchCustomBangs (text) {
-  return customBangs.filter(function (item) {
+function searchCustomBangs(text) {
+  return customBangs.filter(function(item) {
     return item.phrase.indexOf(text) === 0
   })
 }
 
-function getCustomBang (text) {
+function getCustomBang(text) {
   var bang = text.split(' ')[0]
-  return customBangs.filter(function (item) {
+  return customBangs.filter(function(item) {
     return item.phrase === bang
   })[0]
 }
@@ -42,11 +41,11 @@ function getCustomBang (text) {
 // format is {bang: count}
 var bangUseCounts = JSON.parse(localStorage.getItem('bangUseCounts') || '{}')
 
-var saveBangUseCounts = debounce(function () {
+var saveBangUseCounts = debounce(function() {
   localStorage.setItem('bangUseCounts', JSON.stringify(bangUseCounts))
 }, 10000)
 
-function incrementBangCount (bang) {
+function incrementBangCount(bang) {
   // increment bangUseCounts
 
   if (bangUseCounts[bang]) {
@@ -71,10 +70,10 @@ function incrementBangCount (bang) {
 }
 
 // results is an array of {phrase, snippet, image}
-function showBangSearchResults (text, results, input, event, limit = 5) {
+function showBangSearchResults(text, results, input, event, limit = 5) {
   searchbarPlugins.reset('bangs')
 
-  results.sort(function (a, b) {
+  results.sort(function(a, b) {
     var aScore = a.score || 1
     var bScore = b.score || 1
     if (bangUseCounts[a.phrase]) {
@@ -87,7 +86,7 @@ function showBangSearchResults (text, results, input, event, limit = 5) {
     return bScore - aScore
   })
 
-  results.slice(0, limit).forEach(function (result, idx) {
+  results.slice(0, limit).forEach(function(result, idx) {
     // autocomplete the bang, but allow the user to keep typing
 
     var data = {
@@ -98,14 +97,14 @@ function showBangSearchResults (text, results, input, event, limit = 5) {
       fakeFocus: text !== '!' && idx === 0
     }
 
-    data.click = function (e) {
+    data.click = function(e) {
       // if the item is an action, clicking on it should immediately trigger it instead of prompting for additional text
       if (result.isAction && result.fn) {
         searchbar.openURL(result.phrase, e)
         return
       }
 
-      setTimeout(function () {
+      setTimeout(function() {
         incrementBangCount(result.phrase)
 
         input.value = result.phrase + ' '
@@ -122,7 +121,7 @@ function showBangSearchResults (text, results, input, event, limit = 5) {
   })
 }
 
-function getBangSearchResults (text, input, event) {
+function getBangSearchResults(text, input, event) {
   // if there is a space in the text, show bang search suggestions (only supported for custom bangs)
 
   if (text.indexOf(' ') !== -1) {
@@ -144,21 +143,21 @@ function getBangSearchResults (text, input, event) {
   // get results from DuckDuckGo if it is a search engine, and the current tab is not a private tab
   if (searchEngine.getCurrent().name === 'DuckDuckGo' && !tabs.get(tabs.getSelected()).private) {
     resultsPromise = fetch('https://ac.duckduckgo.com/ac/?t=min&q=' + encodeURIComponent(text), {
-      cache: 'force-cache'
-    })
-      .then(function (response) {
+        cache: 'force-cache'
+      })
+      .then(function(response) {
         return response.json()
       })
   } else {
-    resultsPromise = new Promise(function (resolve, reject) {
+    resultsPromise = new Promise(function(resolve, reject) {
       // autocomplete doesn't work if we attempt to autocomplete at the same time as the key is being pressed, so add a small delay (TODO fix this)
-      setTimeout(function () {
+      setTimeout(function() {
         resolve([])
       }, 0)
     })
   }
 
-  resultsPromise.then(function (results) {
+  resultsPromise.then(function(results) {
     if (text === '!') {
       // if we're listing all commands, limit the number of site results so that there's space to show more browser commands
       // but if there's search text, the results are capped elsewhere, and low-ranking results should be included here
@@ -171,7 +170,7 @@ function getBangSearchResults (text, input, event) {
       searchbarPlugins.addResult('bangs', {
         title: l('showMoreBangs'),
         icon: 'carbon:chevron-down',
-        click: function () {
+        click: function() {
           showBangSearchResults(text, results, input, event, Infinity)
         }
       })
@@ -185,20 +184,21 @@ function getBangSearchResults (text, input, event) {
   })
 }
 
-function initialize () {
+function initialize() {
   searchbarPlugins.register('bangs', {
     index: 1,
-    trigger: function (text) {
+    trigger: function(text) {
       return !!text && text.indexOf('!') === 0
     },
     showResults: getBangSearchResults
   })
 
-  searchbarPlugins.registerURLHandler(function (url) {
+  searchbarPlugins.registerURLHandler(function(url) {
     if (url.startsWith('polygon://')) {
       var address = url.substring(11); // Remove "polygon://" prefix
-      // Handle opening Polygon addresses here
-      console.log("Opening Polygon address:", address);
+      // Here you should have your logic to display content based on the address
+      // or show user information if no content is available for the Polygon address
+      displayPolygonAddress(address);
       return true;
     }
     if (url.indexOf('!') === 0) {
@@ -229,7 +229,7 @@ function initialize () {
         snippet: `${bang.snippet}` ?? '',
         // isAction: true - skip search text entry if the bang does not include a search parameter
         isAction: !bang.redirect.includes('%s'),
-        fn: function (text) {
+        fn: function(text) {
           searchbar.openURL(bang.redirect.replace('%s', encodeURIComponent(text)))
         }
       })
@@ -237,4 +237,50 @@ function initialize () {
   }
 }
 
-module.exports = { initialize, registerCustomBang }
+function displayPolygonAddress(address) {
+  // Example logic, replace with actual implementation
+  fetchPolygonData(address)
+    .then(data => {
+      if (data.transactions) {
+        displayTransactions(data.transactions);
+      }
+      if (data.balances) {
+        displayBalances(data.balances);
+      }
+      if (data.contract) {
+        displayContractContents(data.contract);
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching Polygon data:', error);
+      // Display user information or error message if fetching data fails
+      userInformation.displayErrorMessage('Error fetching Polygon data');
+    });
+}
+
+function fetchPolygonData(address) {
+  // Example fetch function, replace with actual implementation
+  return fetch('https://api.polygon.com/address/' + address)
+    .then(response => response.json())
+    .catch(error => {
+      console.error('Error fetching Polygon data:', error);
+      throw new Error('Failed to fetch Polygon data');
+    });
+}
+
+function displayTransactions(transactions) {
+  // Display transactions logic
+}
+
+function displayBalances(balances) {
+  // Display balances logic
+}
+
+function displayContractContents(contract) {
+  // Display contract contents logic
+}
+
+module.exports = {
+  initialize,
+  registerCustomBang
+}
