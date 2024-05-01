@@ -4,7 +4,7 @@ var searchbar = require('searchbar/searchbar.js')
 var searchbarPlugins = require('searchbar/searchbarPlugins.js')
 var searchbarAutocomplete = require('util/autocomplete.js')
 var searchEngine = require('util/searchEngine.js')
-var tabs = require('tabs.js');
+//var tabs = require('tabs.js');
 var userInformation = require('userInformation.js');
 
 // format is {phrase, snippet, score, icon, fn, isCustom, isAction} to match https://ac.duckduckgo.com/ac?q=!
